@@ -11,7 +11,14 @@ router.post('/', validateUser, (req, res) => {
 
 router.post('/:id/posts',[validateUserId, validatePost], (req, res) => {
   // do your magic!
-  res.status(201).json(req.newPost)
+  User.insert(req.body)
+    .then(data=>{
+      res.status(201).json(data)
+    })
+    .catch(err=>{
+      console.log('made it here')
+      res.status(500).json({message: 'Couldnt create post'})
+    })
   
 });
 
@@ -24,12 +31,12 @@ router.get('/', (req, res) => {
     })
     .catch(err=>{
       res.status(500).json({
-        message: 'wtf did i do wrong?!'
+        message: 'what did i do wrong?!'
       });
     })
   } catch (error) {
       res.status(500).json({
-        message: 'wtf did i do wrong wow something went wrong'
+        message: 'erorrrr'
       })
   }
 });
@@ -47,7 +54,7 @@ router.get('/:id/posts', validateUserId, (req, res) => {
       res.status(200).json(data)
     })
     .catch(err=>{
-      res.status(500).json({message: 'nice try butter boy'})
+      res.status(500).json({message: 'no good!!!!'})
     })
 });
 
@@ -55,10 +62,10 @@ router.delete('/:id', validateUserId, (req, res) => {
   // do your magic!
   User.remove(req.params.id)
   .then(data=>{
-    res.status(200).json({message: 'it worked you fucking idiot'});
+    res.status(200).json({message: 'it didnt work'});
   })
   .catch(err=>{
-    res.status(404).json({message: 'im a cop you idiot'})
+    res.status(404).json({message: 'no good'})
   })
 });
 
@@ -68,6 +75,12 @@ router.put('/:id', validateUserId, (req, res) => {
     res.status(400).json({message: 'you gotta give me some info'})
   } else {
     User.update(req.params.id, req.body)
+    .then(data=>{
+      res.status(201).json(data);
+    })
+    .catch(err=>{
+      res.status(500).json({message: 'wow no good'})
+    })
   }
 });
 
@@ -110,7 +123,7 @@ function validateUser(req, res, next) {
       .catch(error=>{
         next({
           code: 500,
-          message: 'why I aughtaa... *head explodes*'
+          message: 'error!!!!!'
         })
       })
   }
@@ -129,15 +142,8 @@ function validatePost(req, res, next) {
       message: 'missing required text field'
     })
   } else {
-    console.log(req.body)
-    User.insert(req.body)
-      .then(data=>{
-        req.newPost = data;
-        next();
-      })
-      .catch(err=>{
-        next({code: 500, message: 'something went wrong...sorry, gotta go *jumps out window/ EXPLODES*'})
-      })
+    console.log(req.body);
+    next();
   }
 }
 
