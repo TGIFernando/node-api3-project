@@ -1,13 +1,15 @@
 const express = require('express');
+const { OPEN_READWRITE } = require('sqlite3');
 const db = require('./userDb')
 
 const router = express.Router();
 
-router.post('/', async (req, res) => {
+router.post('/', validateUser, async (req, res) => {
   // do your magic!
+  res.status(201).json(req.newUser)
 });
 
-router.post('/:id/posts', (req, res) => {
+router.post('/:id/posts', async (req, res) => {
   // do your magic!
 });
 
@@ -31,15 +33,15 @@ router.get('/:id', validateUserId, (req, res) => {
   res.status(200).json(req.user)
 });
 
-router.get('/:id/posts', (req, res) => {
+router.get('/:id/posts', validateUserId, (req, res) => {
   // do your magic!
 });
 
-router.delete('/:id', (req, res) => {
+router.delete('/:id', validateUserId, (req, res) => {
   // do your magic!
 });
 
-router.put('/:id', (req, res) => {
+router.put('/:id', validateUserId, (req, res) => {
   // do your magic!
 });
 
@@ -62,8 +64,21 @@ async function validateUserId  (req, res, next){
   }
 }
 
-function validateUser(req, res, next) {
+async function validateUser(req, res, next) {
   // do your magic!
+  if (!req.body) {
+    next({code: 400, message: 'missing user data'})
+  } else if (!req.body.name) {
+    next({code: 400, message: 'missing required name field'})
+  } else {
+    await db.insert(req.body)
+      .then(data => {
+        req.newUser = data
+        next()
+      }) .catch (error => {
+        next({code: 500, message: 'oops something is wrong with the server'})
+      })
+  }
 }
 
 function validatePost(req, res, next) {
