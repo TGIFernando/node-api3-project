@@ -26,8 +26,9 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.get('/:id', (req, res) => {
+router.get('/:id', validateUserId, (req, res) => {
   // do your magic!
+  res.status(200).json(req.user)
 });
 
 router.get('/:id/posts', (req, res) => {
@@ -44,8 +45,21 @@ router.put('/:id', (req, res) => {
 
 //custom middleware
 
-function validateUserId(req, res, next) {
+async function validateUserId  (req, res, next){
   // do your magic!
+  const { id } = req.params
+  try {
+    const user = await db.getById(id)
+    if (user){
+      req.user = user
+      next()
+    } else {
+      res.status(404).json({ message: `User with id ${id} does not exist`})
+    }
+  } catch (error){
+    console.log(error.message)
+    res.status(500).json({ message: 'oops looks like something went wrong with the server'})
+  }
 }
 
 function validateUser(req, res, next) {
