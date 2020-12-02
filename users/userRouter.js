@@ -37,8 +37,10 @@ router.get('/:id/posts', validateUserId, (req, res) => {
   // do your magic!
 });
 
-router.delete('/:id', validateUserId, (req, res) => {
+router.delete('/:id', validateUserId, async (req, res) => {
   // do your magic!
+  const deleted = await db.remove(req.id)
+  res.status(202).json(deleted)
 });
 
 router.put('/:id', validateUserId, (req, res) => {
@@ -54,6 +56,7 @@ async function validateUserId  (req, res, next){
     const user = await db.getById(id)
     if (user){
       req.user = user
+      req.id = id
       next()
     } else {
       res.status(404).json({ message: `User with id ${id} does not exist`})
