@@ -1,20 +1,36 @@
 const express = require('express');
 const { OPEN_READWRITE } = require('sqlite3');
 const db = require('./userDb')
+const postdb = require('../posts/postDb')
 
 const router = express.Router();
 
 router.post('/', validateUser, async (req, res) => {
-  // do your magic!
-  res.status(201).json(req.newUser)
+  try {
+    await db.insert(req.newUser)
+      .then(
+        res.status(201).json(req.newUser)
+      ) .catch (error => {
+        console.log(error.message)
+      })
+  } catch (error) {
+    console.log(error.message)
+  }
+  
 });
 
-router.post('/:id/posts', async (req, res) => {
-  // do your magic!
+router.post('/:id/posts', [validateUserId ,validatePost], (req, res) => {
+  const post = req.body
+  postdb.insert(post)
+    .then(data => {
+      res.status(201).json(data)
+    }) .catch(error => {
+      console.log(error.message)
+      res.status(500).json({message: 'oops looks like something went wrong'})
+    })
 });
 
 router.get('/', async (req, res) => {
-  // do your magic!
   try{
     const users = await db.get()
     if (!users) {
@@ -29,28 +45,32 @@ router.get('/', async (req, res) => {
 });
 
 router.get('/:id', validateUserId, (req, res) => {
-  // do your magic!
   res.status(200).json(req.user)
 });
 
-router.get('/:id/posts', validateUserId, (req, res) => {
-  // do your magic!
+router.get('/:id/posts', validateUserId, async (req, res) => {
+  const posts = await db.getUserPosts(req.id)
+  res.status(200).json(posts)
 });
 
 router.delete('/:id', validateUserId, async (req, res) => {
-  // do your magic!
   const deleted = await db.remove(req.id)
   res.status(202).json(deleted)
 });
 
-router.put('/:id', validateUserId, (req, res) => {
-  // do your magic!
+router.put('/:id', validateUserId, validateUser, async (req, res) => {
+  try{
+    const newUser = await db.update(req.id, req.body)
+    res.status(201).json(newUser)
+  } catch (error){
+    console.log(error.message)
+  }
+  
 });
 
 //custom middleware
 
 async function validateUserId  (req, res, next){
-  // do your magic!
   const { id } = req.params
   try {
     const user = await db.getById(id)
@@ -67,25 +87,25 @@ async function validateUserId  (req, res, next){
   }
 }
 
-async function validateUser(req, res, next) {
-  // do your magic!
+function validateUser(req, res, next) {
   if (!req.body) {
     next({code: 400, message: 'missing user data'})
   } else if (!req.body.name) {
     next({code: 400, message: 'missing required name field'})
   } else {
-    await db.insert(req.body)
-      .then(data => {
-        req.newUser = data
-        next()
-      }) .catch (error => {
-        next({code: 500, message: 'oops something is wrong with the server'})
-      })
+    req.newUser = req.body
+    next()
   }
 }
 
-function validatePost(req, res, next) {
-  // do your magic!
+async function validatePost(req, res, next) {
+  if(!req.body){
+    next({code: 400, message: 'missing user data'})
+  } else if (!req.body.text){
+    next({code: 400, message: 'missing required text field'})
+  } else {
+    next()
+  }
 }
 
 module.exports = router;
